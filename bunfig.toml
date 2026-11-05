@@ -1,0 +1,4 @@
+[run]
+# Jalankan script package.json (next dev/build/start) dengan runtime Bun,
+# bukan Node. Setara dengan `bun --bun run <script>`.
+bun = true

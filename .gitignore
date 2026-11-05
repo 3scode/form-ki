@@ -1,0 +1,17 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# runtime data (dibuat otomatis oleh aplikasi)
+/data/db.json
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# misc
+.DS_Store
+.env*.local

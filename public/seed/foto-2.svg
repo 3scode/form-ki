@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="Contoh foto siswa">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ecfdf3" />
+      <stop offset="1" stop-color="#f9fafb" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg)" />
+  <circle cx="200" cy="185" r="74" fill="#12b76a" opacity="0.55" />
+  <path d="M56 500c0-92 64-158 144-158s144 66 144 158Z" fill="#039855" opacity="0.45" />
+  <text x="200" y="474" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#039855" opacity="0.85">Contoh foto siswa</text>
+</svg>

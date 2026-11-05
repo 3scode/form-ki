@@ -1,0 +1,537 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+
+  /* Palet brand TailAdmin */
+  --color-brand-25: #f2f7ff;
+  --color-brand-50: #ecf3ff;
+  --color-brand-100: #dde9ff;
+  --color-brand-200: #c2d6ff;
+  --color-brand-300: #9cb9ff;
+  --color-brand-400: #7592ff;
+  --color-brand-500: #465fff;
+  --color-brand-600: #3641f5;
+  --color-brand-700: #2a31d8;
+  --color-brand-800: #252dae;
+  --color-brand-900: #262e89;
+  --color-brand-950: #161950;
+
+  --color-gray-25: #fcfcfd;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f2f4f7;
+  --color-gray-200: #e4e7ec;
+  --color-gray-300: #d0d5dd;
+  --color-gray-400: #98a2b3;
+  --color-gray-500: #667085;
+  --color-gray-600: #475467;
+  --color-gray-700: #344054;
+  --color-gray-800: #1d2939;
+  --color-gray-900: #101828;
+  --color-gray-950: #0c111d;
+
+  --color-success-50: #ecfdf3;
+  --color-success-500: #12b76a;
+  --color-success-600: #039855;
+  --color-error-50: #fef3f2;
+  --color-error-500: #f04438;
+  --color-error-600: #d92d20;
+  --color-warning-50: #fffaeb;
+  --color-warning-500: #f79009;
+  --color-warning-600: #dc6803;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-800 antialiased;
+  }
+
+  ::selection {
+    background: var(--color-brand-200);
+  }
+}
+
+@layer components {
+  .form-input {
+    display: block;
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid var(--color-gray-300);
+    background-color: #ffffff;
+    padding: 0 16px;
+    font-size: 14px;
+    color: var(--color-gray-800);
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+    outline: none;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .form-input::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  .form-input:focus {
+    border-color: var(--color-brand-300);
+    box-shadow: 0 0 0 3px rgb(70 95 255 / 0.1);
+  }
+
+  .form-input:disabled {
+    background-color: var(--color-gray-50);
+    cursor: not-allowed;
+  }
+
+  textarea.form-input {
+    height: auto;
+    min-height: 110px;
+    padding: 12px 16px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+
+  select.form-input {
+    appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23667085'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    cursor: pointer;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-700);
+  }
+
+  .form-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--color-gray-500);
+  }
+
+  /* Varian boleh dipakai tanpa class .btn, jadi gaya dasar ikut diwarisi. */
+  .btn,
+  .btn-primary,
+  .btn-outline,
+  .btn-ghost {
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease,
+      box-shadow 0.15s ease;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn:focus-visible,
+  .btn-primary:focus-visible,
+  .btn-outline:focus-visible,
+  .btn-ghost:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(70 95 255 / 0.18);
+  }
+
+  .btn:disabled,
+  .btn-primary:disabled,
+  .btn-outline:disabled,
+  .btn-ghost:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .btn-primary {
+    background-color: var(--color-brand-500);
+    color: #ffffff;
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-brand-600);
+  }
+
+  .btn-outline {
+    border: 1px solid var(--color-gray-300);
+    background-color: #ffffff;
+    color: var(--color-gray-700);
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  }
+
+  .btn-outline:hover:not(:disabled) {
+    background-color: var(--color-gray-50);
+    color: var(--color-gray-800);
+  }
+
+  .btn-ghost {
+    height: 36px;
+    padding: 0 12px;
+    color: var(--color-gray-600);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-gray-100);
+  }
+
+  .card-surface {
+    border-radius: 16px;
+    border: 1px solid var(--color-gray-200);
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+}
+
+/* Utilitas kecil */
+.shadow-theme-xs {
+  box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+}
+
+.shadow-theme-sm {
+  box-shadow:
+    0 1px 3px 0 rgb(16 24 40 / 0.1),
+    0 1px 2px -1px rgb(16 24 40 / 0.1);
+}
+
+.shadow-theme-lg {
+  box-shadow:
+    0 12px 16px -4px rgb(16 24 40 / 0.08),
+    0 4px 6px -2px rgb(16 24 40 / 0.03);
+}
+
+/* ==========================================================================
+   KARTU KREDENSIAL — 85,6 × 53,98 mm (ID-1), 2 × 5 per A4 portrait
+   ========================================================================== */
+
+/* 209,9 × 296,9 mm: tetap di dalam A4, memberi 0,1 mm toleransi supaya
+   browser tidak menambah halaman kosong karena pembulatan piksel.
+
+   Ruang sisa dibagi rata, jadi margin kiri = jarak antarkolom = margin kanan:
+   - horizontal: (209,9 − 2 × 85,6) / 3 = 12,9 mm
+   - vertikal:   (296,9 − 5 × 53,98) / 6 = 4,5 mm
+   Grid dipusatkan dengan place-content agar pembulatan piksel browser tidak
+   membuat kartu kanan terpotong. */
+.cred-sheet {
+  --cred-card-w: 85.6mm;
+  --cred-card-h: 53.98mm;
+  --cred-gap-x: 12.9mm;
+  --cred-gap-y: 4.5mm;
+  width: 209.9mm;
+  height: 296.9mm;
+  padding: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(2, var(--cred-card-w));
+  grid-template-rows: repeat(5, var(--cred-card-h));
+  column-gap: var(--cred-gap-x);
+  row-gap: var(--cred-gap-y);
+  place-content: center;
+  overflow: hidden;
+  background: #ffffff;
+  color: #101828;
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.cred-card {
+  width: var(--cred-card-w, 85.6mm);
+  height: var(--cred-card-h, 53.98mm);
+  box-sizing: border-box;
+  padding: 3.1mm 3.6mm 2.6mm;
+  border: 0.2mm dashed #98a2b3;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  position: relative;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cred-head {
+  display: flex;
+  align-items: center;
+  gap: 1.8mm;
+  padding-bottom: 1.4mm;
+  border-bottom: 0.25mm solid #e4e7ec;
+}
+
+.cred-mark {
+  width: 7mm;
+  height: 7mm;
+  flex: none;
+  object-fit: contain;
+}
+
+.cred-brand {
+  font-size: 5.4pt;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: #101828;
+}
+
+.cred-brand span {
+  color: #3641f5;
+}
+
+.cred-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2.4mm;
+  flex: 1;
+  padding-top: 1.6mm;
+  min-height: 0;
+}
+
+.cred-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cred-name {
+  font-size: 8.6pt;
+  font-weight: 700;
+  line-height: 1.12;
+  color: #101828;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.cred-class {
+  font-size: 6.4pt;
+  font-weight: 500;
+  color: #475467;
+  margin-top: 0.6mm;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cred-field {
+  margin-top: 1.5mm;
+}
+
+.cred-label {
+  font-size: 4.6pt;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.cred-value {
+  font-size: 7pt;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  color: #1d2939;
+  line-height: 1.2;
+}
+
+.cred-pass-box {
+  margin-top: 1.4mm;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2mm;
+  border: 0.25mm solid #c2d6ff;
+  background: #f2f7ff;
+  border-radius: 1.2mm;
+  padding: 0.9mm 2mm 1.1mm;
+}
+
+.cred-pass-box .cred-label {
+  color: #3538cd;
+}
+
+.cred-pass {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 14pt;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  line-height: 1;
+  color: #161950;
+  font-variant-numeric: tabular-nums;
+}
+
+.cred-qr {
+  width: 22mm;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cred-qr svg {
+  width: 22mm;
+  height: 22mm;
+  display: block;
+}
+
+.cred-qr span {
+  margin-top: 0.9mm;
+  font-size: 4.6pt;
+  font-weight: 500;
+  color: #475467;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.cred-foot {
+  margin-top: 1.2mm;
+  padding-top: 1.1mm;
+  border-top: 0.25mm solid #e4e7ec;
+  font-size: 4.9pt;
+  line-height: 1.25;
+  color: #475467;
+  display: flex;
+  align-items: center;
+  gap: 1mm;
+}
+
+.cred-foot strong {
+  color: #1d2939;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   LEMBAR KERJA (PRINT A4)
+   ========================================================================== */
+
+.worksheet {
+  width: 209.9mm;
+  height: 296.9mm;
+  box-sizing: border-box;
+  padding: 14mm 16mm;
+  background: #ffffff;
+  color: #101828;
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  overflow: hidden;
+  break-after: page;
+  page-break-after: always;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Area isi lembar kerja: dipakai auto-fit supaya selalu pas satu halaman A4. */
+.worksheet-body {
+  height: 100%;
+  overflow: hidden;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .admin-sidebar,
+  .admin-header {
+    display: none !important;
+  }
+
+  .admin-main-wrap {
+    padding-left: 0 !important;
+    margin: 0 !important;
+  }
+
+  .admin-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  .preview-wrap {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  .sheet-label {
+    display: none !important;
+  }
+
+  .sheet-wrap {
+    margin: 0 !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .sheet-wrap:last-of-type {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .cred-sheet,
+  .worksheet {
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  .cred-sheet {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .worksheet {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .worksheet:last-of-type {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
