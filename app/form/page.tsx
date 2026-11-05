@@ -52,7 +52,7 @@ export default async function FormPage() {
               </h1>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-gray-500">
                 Terima kasih, {student.name.split(" ")[0]}. Jawabanmu sudah tersimpan dan tidak
-                dapat diubah lagi. Panitia akan memverifikasi foto dan jawabanmu.
+                dapat diubah lagi.                Panitia akan memverifikasi foto kegiatan dan jawabanmu.
               </p>
               <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-2 text-xs text-gray-600">
                 <IconClock className="h-4 w-4 text-gray-400" />
@@ -95,13 +95,20 @@ export default async function FormPage() {
                   </div>
                 ))}
                 <div className="px-6 py-4">
-                  <p className="text-xs font-semibold text-gray-500">Foto diri saat kunjungan</p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={submission.photo_url}
-                    alt={`Foto ${student.name}`}
-                    className="mt-2 h-52 w-full rounded-lg border border-gray-200 object-cover sm:w-72"
-                  />
+                  <p className="text-xs font-semibold text-gray-500">
+                    Foto kegiatan ({submission.photo_urls.length})
+                  </p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                    {submission.photo_urls.map((url, index) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={`${url}-${index}`}
+                        src={url}
+                        alt={`Foto kegiatan ${index + 1} ${student.name}`}
+                        className="h-32 w-full rounded-lg border border-gray-200 object-cover"
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

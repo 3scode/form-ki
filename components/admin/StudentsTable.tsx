@@ -19,7 +19,7 @@ export type StudentRow = {
   password: string;
   is_submitted: boolean;
   submitted_at: string | null;
-  photo_url: string | null;
+  photo_urls: string[];
 };
 
 export function StudentsTable({ rows, classes }: { rows: StudentRow[]; classes: string[] }) {
@@ -202,19 +202,24 @@ export function StudentsTable({ rows, classes }: { rows: StudentRow[]; classes: 
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  {row.photo_url ? (
+                  {row.photo_urls.length > 0 ? (
                     <button
                       type="button"
                       onClick={() => setPhoto(row)}
                       className="group relative h-9 w-9 overflow-hidden rounded-lg ring-1 ring-gray-200"
-                      title={`Lihat foto ${row.name}`}
+                      title={`Lihat ${row.photo_urls.length} foto ${row.name}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={row.photo_url}
+                        src={row.photo_urls[0]}
                         alt={`Foto ${row.name}`}
                         className="h-full w-full object-cover transition group-hover:scale-105"
                       />
+                      {row.photo_urls.length > 1 ? (
+                        <span className="absolute bottom-0 right-0 rounded-tl-md bg-gray-950/70 px-1 text-[10px] font-semibold text-white">
+                          +{row.photo_urls.length - 1}
+                        </span>
+                      ) : null}
                     </button>
                   ) : (
                     <span className="text-xs text-gray-300">—</span>
@@ -282,7 +287,9 @@ export function StudentsTable({ rows, classes }: { rows: StudentRow[]; classes: 
           >
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Validasi foto siswa</h3>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Validasi foto siswa ({photo.photo_urls.length})
+                </h3>
                 <p className="text-xs text-gray-500">
                   {photo.name} · {photo.class} · {getMajorLabel(photo.major)}
                 </p>
@@ -296,13 +303,18 @@ export function StudentsTable({ rows, classes }: { rows: StudentRow[]; classes: 
                 <IconClose className="h-4 w-4" />
               </button>
             </div>
-            <div className="p-5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photo.photo_url ?? ""}
-                alt={`Foto ${photo.name}`}
-                className="max-h-[60vh] w-full rounded-xl bg-gray-50 object-contain"
-              />
+            <div className="max-h-[80vh] overflow-y-auto p-5">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {photo.photo_urls.map((url, index) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={`${url}-${index}`}
+                    src={url}
+                    alt={`Foto kegiatan ${index + 1} ${photo.name}`}
+                    className="max-h-[45vh] w-full rounded-xl bg-gray-50 object-contain"
+                  />
+                ))}
+              </div>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
                 <span>
                   NISN <span className="font-mono text-gray-700">{photo.nisn}</span>

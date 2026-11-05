@@ -6,7 +6,37 @@ import type { Database, Major, Student, Submission } from "./types";
 const STUDENT_COLUMNS =
   "id, nisn, name, class, major, password, login_token, is_submitted, created_at";
 const SUBMISSION_COLUMNS =
+  "id, student_id, photo_url, photo_urls, answer_history, answer_benefit, answer_result, created_at";
+const LEGACY_SUBMISSION_COLUMNS =
   "id, student_id, photo_url, answer_history, answer_benefit, answer_result, created_at";
+const MISSING_COLUMN_NOTE =
+  "Kolom submissions.photo_urls belum ada. Jalankan supabase/migration-photo-urls.sql di Supabase SQL Editor; sementara semua URL foto disimpan di kolom photo_url.";
+
+/** Baris mentah: photo_url (kolom lama) dipakai sebagai cadangan. */
+type SubmissionRow = Omit<Submission, "photo_urls"> & {
+  photo_url: string | null;
+  photo_urls?: string[] | null;
+};
+
+type PhotoRow = { photo_url: string | null; photo_urls?: string[] | null };
+
+/**
+ * Database yang belum menjalankan migrasi belum punya kolom photo_urls.
+ * Selama itu, URL foto digabung dengan koma di photo_url supaya tidak ada foto
+ * yang hilang; nilainya dipecah lagi saat dibaca.
+ */
+let photoUrlsColumn: boolean | null = null;
+
+function isMissingColumn(error: { code?: string; message: string }): boolean {
+  return error.code === "42703" || /column .* does not exist/i.test(error.message);
+}
+
+function splitPhotoUrl(value: string | null | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
 
 type StudentRow = Omit<Student, "major"> & { major: string };
 
@@ -14,9 +44,44 @@ function toStudent(row: StudentRow): Student {
   return { ...row, major: row.major as Major };
 }
 
+function photoUrlsOf(row: { photo_url?: string | null; photo_urls?: string[] | null }): string[] {
+  const urls = (row.photo_urls ?? []).filter(Boolean);
+  if (urls.length === 0) urls.push(...splitPhotoUrl(row.photo_url));
+  return urls;
+}
+
+/** Query submission dengan fallback ke kolom lama bila migrasi belum dijalankan. */
+async function selectPhotoRows(studentId?: string): Promise<PhotoRow[]> {
+  const supabase = getSupabase();
+  const build = (columns: string) => {
+    const base = supabase.from("submissions").select(columns);
+    return studentId ? base.eq("student_id", studentId) : base;
+  };
+
+  if (photoUrlsColumn !== false) {
+    const { data, error } = await build("photo_url, photo_urls");
+    if (!error) {
+      photoUrlsColumn = true;
+      return (data ?? []) as unknown as PhotoRow[];
+    }
+    if (!isMissingColumn(error)) fail("submissions", error.message);
+    photoUrlsColumn = false;
+    console.warn(MISSING_COLUMN_NOTE);
+  }
+
+  const { data, error } = await build("photo_url");
+  if (error) fail("submissions", error.message);
+  return (data ?? []) as unknown as PhotoRow[];
+}
+
+function toSubmission(row: SubmissionRow): Submission {
+  const { photo_url, photo_urls: _photoUrls, ...rest } = row;
+  return { ...rest, photo_urls: photoUrlsOf(row) };
+}
+
 function fail(table: string, message: string): never {
   const hint = /schema cache|does not exist/i.test(message)
-    ? " Tabel belum ada di database: jalankan isi supabase/schema.sql di Supabase SQL Editor pada project yang sama dengan NEXT_PUBLIC_SUPABASE_URL."
+    ? " Tabel/kolom belum ada di database: jalankan supabase/schema.sql (database baru) atau supabase/migration-photo-urls.sql (database lama) di Supabase SQL Editor pada project yang sama dengan NEXT_PUBLIC_SUPABASE_URL."
     : "";
   throw new Error(`Supabase gagal mengakses tabel ${table}: ${message}.${hint}`);
 }
@@ -43,15 +108,14 @@ export async function readDb(): Promise<Database> {
   const supabase = getSupabase();
   const [students, submissions] = await Promise.all([
     supabase.from("students").select(STUDENT_COLUMNS),
-    supabase.from("submissions").select(SUBMISSION_COLUMNS),
+    selectPhotoRows(),
   ]);
 
   if (students.error) fail("students", students.error.message);
-  if (submissions.error) fail("submissions", submissions.error.message);
 
   return {
     students: ((students.data ?? []) as StudentRow[]).map(toStudent),
-    submissions: (submissions.data ?? []) as Submission[],
+    submissions: (submissions as SubmissionRow[]).map(toSubmission),
   };
 }
 
@@ -220,10 +284,7 @@ export async function updateStudent(
 export async function deleteAllStudents(): Promise<number> {
   const supabase = getSupabase();
 
-  const { data: submissions, error: readError } = await supabase
-    .from("submissions")
-    .select("photo_url");
-  if (readError) fail("submissions", readError.message);
+  const submissions = await selectPhotoRows();
 
   const { data, error } = await supabase
     .from("students")
@@ -232,9 +293,7 @@ export async function deleteAllStudents(): Promise<number> {
     .select("id");
   if (error) fail("students", error.message);
 
-  const photoUrls = ((submissions ?? []) as Array<{ photo_url: string }>).map(
-    (row) => row.photo_url,
-  );
+  const photoUrls = submissions.flatMap(photoUrlsOf);
   await purgePhotoFiles(photoUrls);
 
   return data?.length ?? 0;
@@ -244,12 +303,7 @@ export async function deleteAllStudents(): Promise<number> {
 export async function deleteStudent(id: string): Promise<boolean> {
   const supabase = getSupabase();
 
-  const { data: submission, error: readError } = await supabase
-    .from("submissions")
-    .select("photo_url")
-    .eq("student_id", id)
-    .maybeSingle();
-  if (readError) fail("submissions", readError.message);
+  const [submission] = await selectPhotoRows(id);
 
   const { data, error } = await supabase
     .from("students")
@@ -260,14 +314,13 @@ export async function deleteStudent(id: string): Promise<boolean> {
   if (error) fail("students", error.message);
   if (!data) return false;
 
-  const photo = (submission as { photo_url: string } | null)?.photo_url;
-  if (photo) await purgePhotoFiles([photo]);
+  if (submission) await purgePhotoFiles(photoUrlsOf(submission));
 
   return true;
 }
 
 export type WorksheetAnswers = {
-  photo_url: string;
+  photo_urls: string[];
   answer_history: string;
   answer_benefit: string;
   answer_result: string;
@@ -307,15 +360,26 @@ export async function submitWorksheet(
     return { ok: false, status: 409, error: "Kamu sudah mengirim lembar kerja sebelumnya." };
   }
 
-  const { error: insertError } = await supabase.from("submissions").insert({
-    id: randomUUID(),
-    student_id: studentId,
-    photo_url: answers.photo_url,
-    answer_history: answers.answer_history,
-    answer_benefit: answers.answer_benefit,
-    answer_result: answers.answer_result,
-    created_at: new Date().toISOString(),
-  });
+  const insert = (withPhotoUrls: boolean) =>
+    supabase.from("submissions").insert({
+      id: randomUUID(),
+      student_id: studentId,
+      photo_url: withPhotoUrls
+        ? answers.photo_urls[0]
+        : answers.photo_urls.join(","),
+      ...(withPhotoUrls ? { photo_urls: answers.photo_urls } : {}),
+      answer_history: answers.answer_history,
+      answer_benefit: answers.answer_benefit,
+      answer_result: answers.answer_result,
+      created_at: new Date().toISOString(),
+    });
+
+  let { error: insertError } = await insert(photoUrlsColumn !== false);
+  if (insertError && isMissingColumn(insertError)) {
+    photoUrlsColumn = false;
+    console.warn(MISSING_COLUMN_NOTE);
+    ({ error: insertError } = await insert(false));
+  }
 
   if (insertError) {
     // Batalkan klaim supaya siswa bisa mencoba mengirim ulang.

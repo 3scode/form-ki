@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Brand } from "@/components/Brand";
 import { PrintButton } from "@/components/PrintButton";
 import { Worksheet } from "@/components/Worksheet";
-import { WorksheetFit } from "@/components/WorksheetFit";
+import { WorksheetPrintStyle } from "@/components/WorksheetPrintStyle";
 import { getBaseUrl } from "@/lib/base-url";
 import { readDb } from "@/lib/store";
 
@@ -34,6 +34,7 @@ export default async function PublicWorksheetPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <WorksheetPrintStyle />
       <header className="no-print border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Brand href="/" />
@@ -49,13 +50,11 @@ export default async function PublicWorksheetPage({ params }: PageProps) {
       <main className="mx-auto max-w-5xl px-2 py-5 sm:px-4 sm:py-8">
         <div className="preview-wrap overflow-x-auto rounded-xl bg-gray-200/70 p-3 sm:p-6">
           <article className="worksheet mx-auto bg-white shadow-theme-lg">
-            <WorksheetFit>
-              <Worksheet
-                student={student}
-                submission={submission}
-                qrUrl={`${baseUrl}/lembar/${student.id}`}
-              />
-            </WorksheetFit>
+            <Worksheet
+              student={student}
+              submission={submission}
+              qrUrl={`${baseUrl}/lembar/${student.id}`}
+            />
           </article>
         </div>
         <p className="no-print mt-4 text-center text-[11px] text-gray-400">

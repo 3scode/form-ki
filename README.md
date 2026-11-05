@@ -95,21 +95,24 @@ ke lembar berikutnya.
   Excel bisa diunduh dari halaman ini.
 - **Login siswa** (`/login`): NISN + password. **QR** (`/qr/[token]`): modal konfirmasi nama/kelas,
   lalu set sesi dan masuk ke form; tombol “Bukan saya” kembali ke login manual.
-- **Form siswa** (`/form`): unggah foto (JPG/PNG/WEBP maks. 8 MB) + pertanyaan sejarah sesuai
+- **Form siswa** (`/form`): unggah 1–6 foto kegiatan (JPG/PNG/WEBP maks. 8 MB per foto) +
+  pertanyaan sejarah sesuai
   jurusan (BLPT Yogyakarta untuk TKR/TPL/TSM/TKJ/TEI, Merapi Farma Herbal untuk FKK), manfaat, dan
   hasil. Setelah dikirim, status berubah menjadi “Sudah mengisi” dan jawaban terkunci.
 - **Dashboard** (`/admin`): kartu statistik, pencarian nama/NISN, filter status/kelas/jurusan,
   pagination, pratinjau foto untuk validasi, dan pemilihan siswa untuk cetak lembar kerja.
-- **Cetak lembar kerja** (`/admin/print?ids=...`): satu halaman A4 per siswa berisi identitas,
-  pertanyaan + jawaban, foto, dan kolom tanda tangan Wakahumas. Sidebar/header disembunyikan lewat
-  CSS `@media print`.
+- **Cetak lembar kerja** (`/admin/print?ids=...`): satu lembar A4 per siswa berisi identitas,
+  jawaban, foto, dan kolom tanda tangan Wakahumas. Jawaban yang panjang tidak dipotong — isinya
+  mengalir ke halaman A4 berikutnya (margin tiap halaman diatur `@page` lewat
+  `components/WorksheetPrintStyle.tsx`). Sidebar/header disembunyikan lewat CSS `@media print`.
 
 ## Catatan implementasi
 
 - Penyimpanan data memakai Supabase (`lib/store.ts` → tabel `students` dan `submissions`, skema di
   `supabase/schema.sql`). Foto siswa diunggah ke Cloudinary lewat `app/api/upload` (signed upload
   dari server, `CLOUDINARY_API_SECRET` tidak pernah dikirim ke browser) dan URL `secure_url`-nya
-  disimpan di `submissions.photo_url`.
+  disimpan di `submissions.photo_urls` (array; `photo_url` tetap diisi foto pertama untuk
+  kompatibilitas). Database lama perlu menjalankan `supabase/migration-photo-urls.sql` sekali.
 - Akses database dari server memakai `SUPABASE_SERVICE_ROLE_KEY`, jadi RLS aktif tanpa policy
   publik. Jangan pernah memakai key tersebut di komponen client.
 - Login admin tetap memakai `ADMIN_EMAIL` / `ADMIN_PASSWORD` (cookie sesi HMAC), bukan Supabase Auth.

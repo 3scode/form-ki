@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { getStudentSession } from "@/lib/session";
 import { submitWorksheet } from "@/lib/store";
+import { MAX_PHOTOS } from "@/lib/types";
 
 const CLOUDINARY_URL = /^https:\/\/res\.cloudinary\.com\//;
+
+function isValidPhotoUrl(url: string): boolean {
+  const isLegacyPhoto = url.startsWith("/uploads/") || url.startsWith("/seed/");
+  return CLOUDINARY_URL.test(url) || isLegacyPhoto;
+}
 
 export async function POST(request: Request) {
   const session = await getStudentSession();
@@ -11,16 +17,29 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  const photoUrl = String(body?.photo_url ?? "").trim();
+  // Klien lama masih mengirim photo_url tunggal.
+  const rawPhotos = Array.isArray(body?.photo_urls)
+    ? body.photo_urls
+    : body?.photo_url
+      ? [body.photo_url]
+      : [];
+  const photoUrls = rawPhotos
+    .map((url: unknown) => String(url ?? "").trim())
+    .filter((url: string) => url.length > 0);
   const answerHistory = String(body?.answer_history ?? "").trim();
   const answerBenefit = String(body?.answer_benefit ?? "").trim();
   const answerResult = String(body?.answer_result ?? "").trim();
 
-  if (!photoUrl) {
-    return NextResponse.json({ error: "Foto diri wajib diunggah." }, { status: 400 });
+  if (photoUrls.length === 0) {
+    return NextResponse.json({ error: "Foto kegiatan wajib diunggah minimal satu." }, { status: 400 });
   }
-  const isLegacyPhoto = photoUrl.startsWith("/uploads/") || photoUrl.startsWith("/seed/");
-  if (!CLOUDINARY_URL.test(photoUrl) && !isLegacyPhoto) {
+  if (photoUrls.length > MAX_PHOTOS) {
+    return NextResponse.json(
+      { error: `Foto kegiatan maksimal ${MAX_PHOTOS} file.` },
+      { status: 400 },
+    );
+  }
+  if (!photoUrls.every(isValidPhotoUrl)) {
     return NextResponse.json({ error: "URL foto tidak valid." }, { status: 400 });
   }
   if (!answerHistory || !answerBenefit || !answerResult) {
@@ -29,7 +48,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await submitWorksheet(session.id, {
-      photo_url: photoUrl,
+      photo_urls: photoUrls,
       answer_history: answerHistory,
       answer_benefit: answerBenefit,
       answer_result: answerResult,

@@ -19,6 +19,8 @@ create table if not exists public.submissions (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null unique references public.students (id) on delete cascade,
   photo_url text not null,
+  -- Semua foto kegiatan; photo_url di atas tetap diisi foto pertama.
+  photo_urls text[] not null default '{}',
   answer_history text not null,
   answer_benefit text not null,
   answer_result text not null,

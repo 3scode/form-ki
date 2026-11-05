@@ -53,9 +53,6 @@ export function Worksheet({ student, submission, qrUrl }: WorksheetProps) {
           <h2 className="text-[11pt] font-semibold text-gray-900">
             A. Sejarah {HISTORY_TOPIC[student.major]}
           </h2>
-          <p className="mt-0.5 text-[9pt] italic text-gray-500">
-            Tuliskan secara ringkas sejarah {HISTORY_TOPIC[student.major]}.
-          </p>
           <p className="mt-2 whitespace-pre-line text-[10.5pt] leading-relaxed text-gray-800">
             {submission?.answer_history}
           </p>
@@ -65,9 +62,6 @@ export function Worksheet({ student, submission, qrUrl }: WorksheetProps) {
           <h2 className="text-[11pt] font-semibold text-gray-900">
             B. Manfaat Kegiatan Kunjungan Industri
           </h2>
-          <p className="mt-0.5 text-[9pt] italic text-gray-500">
-            Manfaat kegiatan kunjungan industri.
-          </p>
           <p className="mt-2 whitespace-pre-line text-[10.5pt] leading-relaxed text-gray-800">
             {submission?.answer_benefit}
           </p>
@@ -77,9 +71,6 @@ export function Worksheet({ student, submission, qrUrl }: WorksheetProps) {
           <h2 className="text-[11pt] font-semibold text-gray-900">
             C. Hasil Kegiatan Kunjungan Industri
           </h2>
-          <p className="mt-0.5 text-[9pt] italic text-gray-500">
-            Hasil dari kegiatan kunjungan industri.
-          </p>
           <p className="mt-2 whitespace-pre-line text-[10.5pt] leading-relaxed text-gray-800">
             {submission?.answer_result}
           </p>
@@ -89,12 +80,17 @@ export function Worksheet({ student, submission, qrUrl }: WorksheetProps) {
           <h2 className="text-[11pt] font-semibold text-gray-900">
             D. Lampiran: Foto Kegiatan
           </h2>
-          {submission?.photo_url ? (
-            <img
-              src={submission.photo_url}
-              alt={`Foto kegiatan ${student.name}`}
-              className="mt-2 max-h-[60mm] rounded border border-gray-300 object-contain"
-            />
+          {submission && submission.photo_urls.length > 0 ? (
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {submission.photo_urls.map((url, index) => (
+                <img
+                  key={`${url}-${index}`}
+                  src={url}
+                  alt={`Foto kegiatan ${index + 1} ${student.name}`}
+                  className="max-h-[55mm] w-full rounded border border-gray-300 object-contain"
+                />
+              ))}
+            </div>
           ) : null}
         </section>
       </div>

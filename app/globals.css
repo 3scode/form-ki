@@ -438,7 +438,9 @@
 
 .worksheet {
   width: 209.9mm;
-  height: 296.9mm;
+  /* Tinggi minimum satu A4, tapi boleh tumbuh: isi yang panjang mengalir ke
+     halaman berikutnya, bukan dipotong. Margin tiap halaman diatur @page. */
+  min-height: 296.9mm;
   box-sizing: border-box;
   padding: 14mm 16mm;
   background: #ffffff;
@@ -446,17 +448,10 @@
   font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   font-size: 10.5pt;
   line-height: 1.55;
-  overflow: hidden;
   break-after: page;
   page-break-after: always;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
-}
-
-/* Area isi lembar kerja: dipakai auto-fit supaya selalu pas satu halaman A4. */
-.worksheet-body {
-  height: 100%;
-  overflow: hidden;
 }
 
 @media print {
@@ -533,5 +528,17 @@
   .worksheet:last-of-type {
     break-after: auto;
     page-break-after: auto;
+  }
+
+  /* Saat jawaban panjang mengalir ke halaman berikutnya: judul bagian tidak
+     terpisah dari jawabannya, dan foto tidak terbelah dua halaman. */
+  .worksheet h2 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .worksheet img {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

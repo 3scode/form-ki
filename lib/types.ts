@@ -26,10 +26,14 @@ export type Student = {
   created_at: string;
 };
 
+/** Batas jumlah foto kegiatan yang bisa dilampirkan satu siswa. */
+export const MAX_PHOTOS = 6;
+
 export type Submission = {
   id: string;
   student_id: string;
-  photo_url: string;
+  /** Semua foto kegiatan; minimal satu, urut sesuai pilihan siswa. */
+  photo_urls: string[];
   answer_history: string;
   answer_benefit: string;
   answer_result: string;

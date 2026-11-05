@@ -3,7 +3,7 @@ import Link from "next/link";
 import { IconChevronLeft, IconFile, IconPrinter } from "@/components/Icons";
 import { PrintButton } from "@/components/PrintButton";
 import { Worksheet } from "@/components/Worksheet";
-import { WorksheetFit } from "@/components/WorksheetFit";
+import { WorksheetPrintStyle } from "@/components/WorksheetPrintStyle";
 import { getBaseUrl } from "@/lib/base-url";
 import { readDb } from "@/lib/store";
 
@@ -38,6 +38,7 @@ export default async function PrintWorksheetPage({
 
   return (
     <div className="space-y-5">
+      <WorksheetPrintStyle />
       <div className="no-print flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <Link
@@ -51,13 +52,13 @@ export default async function PrintWorksheetPage({
             Cetak lembar kerja
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            {items.length} siswa terpilih · 1 halaman A4 per siswa · sidebar dan header tidak ikut
-            tercetak.
+            {items.length} siswa terpilih · 1–2 halaman A4 per siswa (jawaban panjang lanjut ke
+            halaman berikutnya) · sidebar dan header tidak ikut tercetak.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="badge bg-gray-50 text-gray-600 ring-1 ring-gray-200">
-            {items.length} halaman A4
+            {items.length} lembar kerja
           </span>
           <PrintButton label="Print Lembar Kerja" className="btn-primary h-10 px-4 text-[13px]" />
         </div>
@@ -81,13 +82,11 @@ export default async function PrintWorksheetPage({
         <div className="preview-wrap overflow-x-auto rounded-xl bg-gray-100 p-4">
           {items.map(({ student, submission }) => (
             <article key={student.id} className="worksheet mb-6 bg-white shadow-theme-lg last:mb-0">
-              <WorksheetFit>
-                <Worksheet
-                  student={student}
-                  submission={submission}
-                  qrUrl={`${baseUrl}/lembar/${student.id}`}
-                />
-              </WorksheetFit>
+              <Worksheet
+                student={student}
+                submission={submission}
+                qrUrl={`${baseUrl}/lembar/${student.id}`}
+              />
             </article>
           ))}
         </div>
@@ -96,7 +95,7 @@ export default async function PrintWorksheetPage({
       <p className="no-print flex items-center justify-center gap-1.5 text-center text-[11px] text-gray-400">
         <IconPrinter className="h-3.5 w-3.5" />
         Scan QR di lembar untuk membuka versi digitalnya. Cetak dengan A4 portrait, skala 100%,
-        margin None.
+        margin Default — jangan “None”, agar halaman lanjutan tetap punya margin.
       </p>
     </div>
   );

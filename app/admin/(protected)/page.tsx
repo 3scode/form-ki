@@ -86,7 +86,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     return {
       ...student,
       submitted_at: submission?.created_at ?? null,
-      photo_url: submission?.photo_url ?? null,
+      photo_urls: submission?.photo_urls ?? [],
     };
   });
 
