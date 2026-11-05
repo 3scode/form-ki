@@ -121,7 +121,3 @@ ke lembar berikutnya.
   kerentanan). Next.js 16 memakai Turbopack secara default untuk `dev` dan `build`.
 - Tooling memakai Bun 1.4 (`bun.lock` sebagai lockfile; `package-lock.json` tidak dipakai). Build,
 dev server, upload foto, dan import Excel sudah diuji berjalan di runtime Bun.
-# form-ki
-# form-ki
-# form-ki
-# form-ki
