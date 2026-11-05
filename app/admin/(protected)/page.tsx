@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PerPageSelect } from "@/components/admin/PerPageSelect";
 import { StudentsTable, type StudentRow } from "@/components/admin/StudentsTable";
 import {
   IconCheckCircle,
@@ -16,13 +17,32 @@ import { getMajorLabel, MAJORS, type Major } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Dashboard Admin" };
 
-const PER_PAGE = 10;
+const DEFAULT_PER_PAGE = 10;
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 function first(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return value[0] ?? "";
   return value ?? "";
+}
+
+/** Deret nomor halaman ringkas: 1 … 4 5 6 … 20 supaya tidak membungkus. */
+function pageItems(current: number, totalPages: number): Array<number | "gap"> {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const items: Array<number | "gap"> = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(totalPages - 1, current + 1);
+
+  if (start > 2) items.push("gap");
+  for (let number = start; number <= end; number += 1) items.push(number);
+  if (end < totalPages - 1) items.push("gap");
+  items.push(totalPages);
+
+  return items;
 }
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams: SearchParams }) {
@@ -32,6 +52,8 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const classFilter = first(params.class) || "all";
   const majorFilter = first(params.major) || "all";
   const requestedPage = Number.parseInt(first(params.page) || "1", 10);
+  const requestedPerPage = Number.parseInt(first(params.perPage), 10);
+  const perPage = PER_PAGE_OPTIONS.includes(requestedPerPage) ? requestedPerPage : DEFAULT_PER_PAGE;
 
   const db = await readDb();
   const classes = uniqueValues(db, "class");
@@ -54,10 +76,10 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     })
     .sort((a, b) => a.class.localeCompare(b.class, "id") || a.name.localeCompare(b.name, "id"));
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const page = Math.min(Math.max(Number.isFinite(requestedPage) ? requestedPage : 1, 1), totalPages);
-  const start = (page - 1) * PER_PAGE;
-  const paged = filtered.slice(start, start + PER_PAGE);
+  const start = (page - 1) * perPage;
+  const paged = filtered.slice(start, start + perPage);
 
   const rows: StudentRow[] = paged.map((student: Student) => {
     const submission = getSubmission(db, student.id);
@@ -74,6 +96,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     if (status !== "all") search.set("status", status);
     if (classFilter !== "all") search.set("class", classFilter);
     if (majorFilter !== "all") search.set("major", majorFilter);
+    if (perPage !== DEFAULT_PER_PAGE) search.set("perPage", String(perPage));
     search.set("page", String(target));
     return `/admin?${search.toString()}`;
   }
@@ -197,32 +220,44 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                 </option>
               ))}
             </select>
+            <input type="hidden" name="perPage" value={perPage} />
             <div className="flex gap-2">
               <button type="submit" className="btn-primary h-11 flex-1 px-4 text-[13px]">
                 Filter
               </button>
-              <Link href="/admin" className="btn-outline h-11 px-3.5 text-[13px]">
+              <Link
+                href={perPage === DEFAULT_PER_PAGE ? "/admin" : `/admin?perPage=${perPage}`}
+                className="btn-outline h-11 px-3.5 text-[13px]"
+              >
                 Reset
               </Link>
             </div>
           </form>
         </div>
 
-        <StudentsTable rows={rows} />
+        <StudentsTable rows={rows} classes={classes} />
 
         <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-100 px-4 py-4 text-xs text-gray-500 sm:flex-row sm:px-5">
-          <p>
-            Menampilkan{" "}
-            <span className="font-medium text-gray-700">
-              {filtered.length === 0 ? 0 : start + 1}–{Math.min(start + PER_PAGE, filtered.length)}
-            </span>{" "}
-            dari <span className="font-medium text-gray-700">{filtered.length}</span> siswa
-          </p>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <p>
+              Menampilkan{" "}
+              <span className="font-medium text-gray-700">
+                {filtered.length === 0 ? 0 : start + 1}–{Math.min(start + perPage, filtered.length)}
+              </span>{" "}
+              dari <span className="font-medium text-gray-700">{filtered.length}</span> siswa
+            </p>
+            <PerPageSelect
+              value={perPage}
+              options={PER_PAGE_OPTIONS}
+              defaultValue={DEFAULT_PER_PAGE}
+            />
+          </div>
+          <nav className="flex items-center gap-1.5" aria-label="Navigasi halaman">
             <Link
               href={hrefForPage(Math.max(1, page - 1))}
               aria-disabled={page === 1}
-              className={`grid h-8 w-8 place-items-center rounded-lg border border-gray-200 ${
+              aria-label="Halaman sebelumnya"
+              className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gray-200 ${
                 page === 1
                   ? "pointer-events-none text-gray-300"
                   : "text-gray-600 hover:bg-gray-50"
@@ -230,23 +265,36 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             >
               <IconChevronLeft className="h-4 w-4" />
             </Link>
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => (
-              <Link
-                key={number}
-                href={hrefForPage(number)}
-                className={`grid h-8 min-w-8 place-items-center rounded-lg border px-2 text-xs font-medium ${
-                  number === page
-                    ? "border-brand-500 bg-brand-500 text-white"
-                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {number}
-              </Link>
-            ))}
+            {pageItems(page, totalPages).map((item, index) =>
+              item === "gap" ? (
+                <span
+                  key={`gap-${index}`}
+                  className="grid h-8 w-6 place-items-center text-gray-400"
+                  aria-hidden="true"
+                >
+                  …
+                </span>
+              ) : (
+                <Link
+                  key={item}
+                  href={hrefForPage(item)}
+                  aria-label={`Halaman ${item}`}
+                  aria-current={item === page ? "page" : undefined}
+                  className={`grid h-8 min-w-8 place-items-center rounded-lg border px-2 text-xs font-medium ${
+                    item === page
+                      ? "border-brand-500 bg-brand-500 text-white"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {item}
+                </Link>
+              ),
+            )}
             <Link
               href={hrefForPage(Math.min(totalPages, page + 1))}
               aria-disabled={page === totalPages}
-              className={`grid h-8 w-8 place-items-center rounded-lg border border-gray-200 ${
+              aria-label="Halaman berikutnya"
+              className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gray-200 ${
                 page === totalPages
                   ? "pointer-events-none text-gray-300"
                   : "text-gray-600 hover:bg-gray-50"
@@ -254,7 +302,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             >
               <IconChevronRight className="h-4 w-4" />
             </Link>
-          </div>
+          </nav>
         </div>
       </div>
     </div>

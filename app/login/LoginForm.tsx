@@ -128,12 +128,6 @@ export function LoginForm() {
           {!loading ? <IconArrowRight className="h-4 w-4" /> : null}
         </button>
       </form>
-
-      <div className="mt-6 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-xs leading-relaxed text-gray-500">
-        <span className="font-semibold text-gray-600">Data contoh:</span> NISN{" "}
-        <span className="font-mono">0061234501</span> · password{" "}
-        <span className="font-mono">482913</span>
-      </div>
     </div>
   );
 }

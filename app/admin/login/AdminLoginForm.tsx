@@ -103,12 +103,6 @@ export function AdminLoginForm() {
           {!loading ? <IconArrowRight className="h-4 w-4" /> : null}
         </button>
       </form>
-
-      <div className="mt-5 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs leading-relaxed text-gray-500">
-        <span className="font-semibold text-gray-600">Akun demo:</span>{" "}
-        <span className="font-mono">admin@ki2026.sch.id</span> · password{" "}
-        <span className="font-mono">admin123</span>
-      </div>
     </>
   );
 }

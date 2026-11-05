@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IconClose, IconPrinter } from "@/components/Icons";
+import { IconClose, IconEdit, IconPlus, IconPrinter, IconTrash } from "@/components/Icons";
 import { formatDateTime, initials } from "@/lib/format";
 import { getMajorLabel, type Major } from "@/lib/types";
+import {
+  DeleteAllStudentsDialog,
+  DeleteStudentDialog,
+  StudentFormDialog,
+} from "./StudentDialog";
 
 export type StudentRow = {
   id: string;
@@ -17,9 +22,13 @@ export type StudentRow = {
   photo_url: string | null;
 };
 
-export function StudentsTable({ rows }: { rows: StudentRow[] }) {
+export function StudentsTable({ rows, classes }: { rows: StudentRow[]; classes: string[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [photo, setPhoto] = useState<StudentRow | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<StudentRow | null>(null);
+  const [deleting, setDeleting] = useState<StudentRow | null>(null);
+  const [purgeOpen, setPurgeOpen] = useState(false);
   const rowKey = rows.map((row) => row.id).join("|");
 
   useEffect(() => {
@@ -75,6 +84,22 @@ export function StudentsTable({ rows }: { rows: StudentRow[] }) {
           )}
         </p>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            className="btn-outline h-9 px-3.5 text-xs"
+          >
+            <IconPlus className="h-4 w-4" />
+            Tambah siswa
+          </button>
+          <button
+            type="button"
+            onClick={() => setPurgeOpen(true)}
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-error-500/30 px-3.5 text-xs font-semibold text-error-600 transition hover:bg-error-50"
+          >
+            <IconTrash className="h-4 w-4" />
+            Hapus semua data
+          </button>
           {selected.size > 0 ? (
             <button
               type="button"
@@ -97,7 +122,7 @@ export function StudentsTable({ rows }: { rows: StudentRow[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] text-left text-sm">
+        <table className="w-full min-w-[980px] text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-500">
               <th className="w-10 px-4 py-3">
@@ -118,12 +143,13 @@ export function StudentsTable({ rows }: { rows: StudentRow[] }) {
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Foto</th>
               <th className="px-4 py-3 font-semibold">Waktu kirim</th>
+              <th className="px-4 py-3 text-right font-semibold">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-14 text-center">
+                <td colSpan={10} className="px-4 py-14 text-center">
                   <p className="text-sm font-medium text-gray-700">Tidak ada siswa yang cocok</p>
                   <p className="mt-1 text-xs text-gray-500">
                     Coba ubah kata kunci atau filter status/kelas/jurusan.
@@ -197,11 +223,50 @@ export function StudentsTable({ rows }: { rows: StudentRow[] }) {
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
                   {row.submitted_at ? formatDateTime(row.submitted_at) : "—"}
                 </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditing(row)}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                      title={`Edit ${row.name}`}
+                      aria-label={`Edit ${row.name}`}
+                    >
+                      <IconEdit className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(row)}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-gray-400 transition hover:bg-error-50 hover:text-error-600"
+                      title={`Hapus ${row.name}`}
+                      aria-label={`Hapus ${row.name}`}
+                    >
+                      <IconTrash className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {formOpen || editing ? (
+        <StudentFormDialog
+          student={editing}
+          classes={classes}
+          onClose={() => {
+            setFormOpen(false);
+            setEditing(null);
+          }}
+        />
+      ) : null}
+
+      {deleting ? (
+        <DeleteStudentDialog student={deleting} onClose={() => setDeleting(null)} />
+      ) : null}
+
+      {purgeOpen ? <DeleteAllStudentsDialog onClose={() => setPurgeOpen(false)} /> : null}
 
       {photo ? (
         <div

@@ -211,3 +211,29 @@ export function IconUser(props: IconProps) {
     </Base>
   );
 }
+
+export function IconPlus(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Base>
+  );
+}
+
+export function IconEdit(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 20h4l10.4-10.4a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+      <path d="M14.4 5.6l4 4" />
+    </Base>
+  );
+}
+
+export function IconTrash(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 7h16M9.5 7V4.8h5V7M6.5 7l.9 12.2h9.2L17.5 7" />
+      <path d="M10.5 10.6v5.6M13.5 10.6v5.6" />
+    </Base>
+  );
+}

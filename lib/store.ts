@@ -1,4 +1,5 @@
 import { randomBytes, randomInt, randomUUID } from "node:crypto";
+import { deletePhotos } from "./cloudinary";
 import { getSupabase } from "./supabase";
 import type { Database, Major, Student, Submission } from "./types";
 
@@ -18,6 +19,16 @@ function fail(table: string, message: string): never {
     ? " Tabel belum ada di database: jalankan isi supabase/schema.sql di Supabase SQL Editor pada project yang sama dengan NEXT_PUBLIC_SUPABASE_URL."
     : "";
   throw new Error(`Supabase gagal mengakses tabel ${table}: ${message}.${hint}`);
+}
+
+/** Data siswa sudah terhapus, jadi kegagalan Cloudinary hanya dicatat. */
+async function purgePhotoFiles(urls: string[]): Promise<void> {
+  if (urls.length === 0) return;
+  try {
+    await deletePhotos(urls);
+  } catch (error) {
+    console.error("Gagal menghapus foto dari Cloudinary:", error);
+  }
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -119,6 +130,140 @@ export async function importStudents(
 
   const updated = rows.filter((row) => byNisn.has(row.nisn)).length;
   return { inserted: rows.length - updated, updated };
+}
+
+export type StudentInput = {
+  nisn: string;
+  name: string;
+  class: string;
+  major: Major;
+};
+
+export type StudentMutation =
+  | { ok: true; student: Student }
+  | { ok: false; reason: "duplicate-nisn" | "not-found" };
+
+/** Siswa baru dapat password 6 digit dan token QR baru; status mulai dari belum mengisi. */
+export async function createStudent(input: StudentInput): Promise<StudentMutation> {
+  const supabase = getSupabase();
+
+  const { data: existing, error: readError } = await supabase
+    .from("students")
+    .select("id")
+    .eq("nisn", input.nisn)
+    .maybeSingle();
+  if (readError) fail("students", readError.message);
+  if (existing) return { ok: false, reason: "duplicate-nisn" };
+
+  const { data, error } = await supabase
+    .from("students")
+    .insert({
+      id: randomUUID(),
+      nisn: input.nisn,
+      name: input.name,
+      class: input.class,
+      major: input.major,
+      password: randomInt(100000, 1000000).toString(),
+      login_token: randomBytes(16).toString("hex"),
+      is_submitted: false,
+      created_at: new Date().toISOString(),
+    })
+    .select(STUDENT_COLUMNS)
+    .single();
+
+  if (error) {
+    if (error.code === "23505") return { ok: false, reason: "duplicate-nisn" };
+    fail("students", error.message);
+  }
+
+  return { ok: true, student: toStudent(data as StudentRow) };
+}
+
+/** Password, token QR, dan status pengisian tidak diubah lewat edit data siswa. */
+export async function updateStudent(
+  id: string,
+  input: StudentInput,
+): Promise<StudentMutation> {
+  const supabase = getSupabase();
+
+  const { data: existing, error: readError } = await supabase
+    .from("students")
+    .select("id")
+    .eq("nisn", input.nisn)
+    .neq("id", id)
+    .maybeSingle();
+  if (readError) fail("students", readError.message);
+  if (existing) return { ok: false, reason: "duplicate-nisn" };
+
+  const { data, error } = await supabase
+    .from("students")
+    .update({
+      nisn: input.nisn,
+      name: input.name,
+      class: input.class,
+      major: input.major,
+    })
+    .eq("id", id)
+    .select(STUDENT_COLUMNS)
+    .maybeSingle();
+
+  if (error) {
+    if (error.code === "23505") return { ok: false, reason: "duplicate-nisn" };
+    fail("students", error.message);
+  }
+  if (!data) return { ok: false, reason: "not-found" };
+
+  return { ok: true, student: toStudent(data as StudentRow) };
+}
+
+/** Mengosongkan tabel siswa; submission ikut terhapus lewat on delete cascade. */
+export async function deleteAllStudents(): Promise<number> {
+  const supabase = getSupabase();
+
+  const { data: submissions, error: readError } = await supabase
+    .from("submissions")
+    .select("photo_url");
+  if (readError) fail("submissions", readError.message);
+
+  const { data, error } = await supabase
+    .from("students")
+    .delete()
+    .not("id", "is", null)
+    .select("id");
+  if (error) fail("students", error.message);
+
+  const photoUrls = ((submissions ?? []) as Array<{ photo_url: string }>).map(
+    (row) => row.photo_url,
+  );
+  await purgePhotoFiles(photoUrls);
+
+  return data?.length ?? 0;
+}
+
+/** Submission siswa ikut terhapus lewat on delete cascade di skema Supabase. */
+export async function deleteStudent(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+
+  const { data: submission, error: readError } = await supabase
+    .from("submissions")
+    .select("photo_url")
+    .eq("student_id", id)
+    .maybeSingle();
+  if (readError) fail("submissions", readError.message);
+
+  const { data, error } = await supabase
+    .from("students")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) fail("students", error.message);
+  if (!data) return false;
+
+  const photo = (submission as { photo_url: string } | null)?.photo_url;
+  if (photo) await purgePhotoFiles([photo]);
+
+  return true;
 }
 
 export type WorksheetAnswers = {
